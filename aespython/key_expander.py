@@ -1,3 +1,19 @@
+#!/usr/bin/env python
+"""
+AES Key Expansion.
+
+Expands 128, 192, or 256 bit key for use with AES
+
+Running this file as __main__ will result in a self-test of the algorithm.
+
+Algorithm per NIST FIPS-197 http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
+
+Copyright (c) 2010, Adam Newman http://www.caller9.com/
+Licensed under the MIT license http://www.opensource.org/licenses/mit-license.php
+"""
+__author__ = "Adam Newman"
+
+#Normally use relative import. In test mode use local import.
 try:
     from . import aes_tables
 except ValueError:
@@ -104,6 +120,7 @@ class KeyExpander:
         return new_key
 
 if __name__ == "__main__":
+    #Perform a self test using test data
     import test_keys
     test_data = test_keys.TestKeys()
     

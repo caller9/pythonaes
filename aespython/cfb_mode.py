@@ -1,4 +1,18 @@
+#!/usr/bin/env python
+"""
+CFB Mode of operation
+
+Running this file as __main__ will result in a self-test of the algorithm.
+
+Algorithm per NIST SP 800-38A http://csrc.nist.gov/publications/nistpubs/800-38a/sp800-38a.pdf
+
+Copyright (c) 2010, Adam Newman http://www.caller9.com/
+Licensed under the MIT license http://www.opensource.org/licenses/mit-license.php
+"""
+__author__ = "Adam Newman"
+
 class CFBMode:
+    """Perform CFB operation on a block and retain IV information for next operation"""
     def __init__(self, block_cipher, block_size):
         self._block_cipher = block_cipher
         self._block_size = block_size
@@ -26,6 +40,7 @@ class CFBMode:
         return plaintext
         
 if __name__ == "__main__":
+    #Self test
     import key_expander
     import aes_cipher
     import test_keys

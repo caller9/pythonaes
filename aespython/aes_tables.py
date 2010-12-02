@@ -1,3 +1,11 @@
+"""
+Instantiate AES tables for rcon, sbox, i_sbox, and galois_lookup.
+
+Copyright (c) 2010, Adam Newman http://www.caller9.com/
+Licensed under the MIT license http://www.opensource.org/licenses/mit-license.php
+"""
+__author__ = "Adam Newman"
+
 class AESTables:
     """Tables to speed calculation"""
     

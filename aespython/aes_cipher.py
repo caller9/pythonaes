@@ -1,9 +1,28 @@
+#!/usr/bin/env python
+"""
+AES Block Cipher.
+
+Performs single block cipher decipher operations on a 16 element list of integers.
+These integers represent 8 bit bytes in a 128 bit block.
+The result of cipher or decipher operations is the transformed 16 element list of integers.
+
+Running this file as __main__ will result in a self-test of the algorithm.
+
+Algorithm per NIST FIPS-197 http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
+
+Copyright (c) 2010, Adam Newman http://www.caller9.com/
+Licensed under the MIT license http://www.opensource.org/licenses/mit-license.php
+"""
+__author__ = "Adam Newman"
+
+#Normally use relative import. In test mode use local import.
 try:
     from . import aes_tables
 except ValueError:
     import aes_tables
 
 class AESCipher:
+    """Perform single block AES cipher/decipher"""
     
     def __init__ (self, expanded_key):        
         #Store epanded key
@@ -128,6 +147,7 @@ class AESCipher:
         return state
     
 if __name__ == "__main__":
+    #Use test data to perform a self test with all key lengths
     import test_keys
     import key_expander
     
