@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """
 AES Key Expansion.
 
@@ -119,17 +120,24 @@ class KeyExpander:
        
         return new_key
 
-if __name__ == "__main__":
-    #Perform a self test using test data
-    import test_keys
-    test_data = test_keys.TestKeys()
+import unittest
+class TestKeyExpander(unittest.TestCase):
     
-    for key_size in [128, 192, 256]:
-        test_expander = KeyExpander(key_size)
-        test_expanded_key = test_expander.expand(test_data.test_key[key_size])
-        print ('Test', key_size, 'bit key expansion:', end = ' ')
-        if (len([i for i, j in zip(test_expanded_key, test_data.test_expanded_key_validated[key_size]) if i == j]) == len(test_data.test_expanded_key_validated[key_size])):
-            print ('passed')
-        else:
-            print ('failed')
+    def test_keys(self):
+        """Test All Key Expansions"""
+        import test_keys
+        test_data = test_keys.TestKeys()
+        
+        for key_size in [128, 192, 256]:
+            test_expander = KeyExpander(key_size)
+            test_expanded_key = test_expander.expand(test_data.test_key[key_size])
+            self.assertEqual (len([i for i, j in zip(test_expanded_key, test_data.test_expanded_key_validated[key_size]) if i == j]), 
+                len(test_data.test_expanded_key_validated[key_size]),
+                msg='Key expansion ' + str(key_size) + ' bit')
+        
+if __name__ == "__main__":
+    unittest.main()
+    
+    
+    
     

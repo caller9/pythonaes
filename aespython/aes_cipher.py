@@ -145,31 +145,33 @@ class AESCipher:
         state = self._add_round_key(state, 0)
         
         return state
-    
+
+import unittest
+class TestCipher(unittest.TestCase):
+    def test_cipher(self):
+        """Test AES cipher with all key lengths."""
+        import test_keys
+        import key_expander
+        
+        test_data = test_keys.TestKeys()
+        
+        for key_size in [128, 192, 256]:
+            test_key_expander = key_expander.KeyExpander(key_size)
+            test_expanded_key = test_key_expander.expand(test_data.test_key[key_size])
+            test_cipher = AESCipher(test_expanded_key)
+            test_result_ciphertext = test_cipher.cipher_block(test_data.test_block_plaintext)            
+            self.assertEquals(len([i for i, j in zip(test_result_ciphertext, test_data.test_block_ciphertext_validated[key_size]) if i == j]),
+                16,
+                msg='Test ' + str(key_size) + ' bit cipher')
+        
+            test_result_plaintext = test_cipher.decipher_block(test_data.test_block_ciphertext_validated[key_size])
+            self.assertEquals(len([i for i, j in zip(test_result_plaintext, test_data.test_block_plaintext) if i == j]),
+                16,
+                msg='Test ' + str(key_size) + ' bit decipher')
+
 if __name__ == "__main__":
-    #Use test data to perform a self test with all key lengths
-    import test_keys
-    import key_expander
-    
-    test_data = test_keys.TestKeys()
-    
-    for key_size in [128, 192, 256]:
-        test_key_expander = key_expander.KeyExpander(key_size)
-        test_expanded_key = test_key_expander.expand(test_data.test_key[key_size])
-        test_cipher = AESCipher(test_expanded_key)
-        test_result_ciphertext = test_cipher.cipher_block(test_data.test_block_plaintext)
-        print ('Test',key_size,'bit cipher:', end = ' ')
-        if (len([i for i, j in zip(test_result_ciphertext, test_data.test_block_ciphertext_validated[key_size]) if i == j]) == 16):
-            print ('passed')
-        else:
-            print ('failed')
-    
-        test_result_plaintext = test_cipher.decipher_block(test_data.test_block_ciphertext_validated[key_size])
-        print ('Test',key_size,'bit decipher:', end = ' ')
-        if (len([i for i, j in zip(test_result_plaintext, test_data.test_block_plaintext) if i == j]) == 16):
-            print ('passed')
-        else:
-            print ('failed')
+    unittest.main()
+
     
     
     
