@@ -112,9 +112,14 @@ class AESCipher:
         #XOR the state with the current round key
         return [ i ^ j for i,j in zip(state, self._expanded_key[round * 16 : (round + 1) * 16])]
     
+    def fill_block (self, input):
+        if (len(input) < 16):
+            return list(input) + [0] * (16 - len(input))
+        return input
+    
     def cipher_block (self, input):
         """Perform AES block cipher on input"""
-        state = input        
+        state = self.fill_block(input)
         
         state = self._add_round_key(state, 0)
                 
@@ -132,7 +137,7 @@ class AESCipher:
     
     def decipher_block (self, input):
         """Perform AES block decipher on input"""
-        state = input
+        state = self.fill_block(input)
         
         state = self._add_round_key(state, self._Nr)
         
