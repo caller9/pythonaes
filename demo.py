@@ -14,6 +14,7 @@ On decryption, salt is read from first 32 bytes of encrypted file.
 Copyright (c) 2010, Adam Newman http://www.caller9.com/
 Licensed under the MIT license http://www.opensource.org/licenses/mit-license.php
 """
+from __future__ import print_function
 __author__ = "Adam Newman"
 
 import os
@@ -43,7 +44,6 @@ class AESdemo:
         self._iv = [i ^ j for i, j in zip(self._salt[16:], sha512[32:48])]
     
     def decrypt_file(self, in_file_path, out_file_path, password = None):
-        
         with open(in_file_path, 'rb') as in_file:
             if password is not None:
                 self._salt = in_file.read (32)
@@ -61,11 +61,12 @@ class AESdemo:
             with open(out_file_path, 'wb') as out_file:
                 eof = False
                 while not eof:
-                    in_data = in_file.read(16)
+                    in_data = bytearray(in_file.read(16))
                     if (len(in_data) == 0):
                         eof = True
                     else:
                         out_data = aes_cbc_256.decrypt_block(in_data)
+                        #out_data = in_data
                         out_file.write(bytes(out_data))
                     
         
@@ -104,6 +105,11 @@ class AESdemo:
         self._salt = None
         
 if __name__ == "__main__":
+    import time
     demo = AESdemo()    
-    demo.encrypt_file('stuff.txt', 'out.crypt', 'foo')
-    demo.decrypt_file('out.crypt', 'stuff2.txt', 'foo')
+    #demo.encrypt_file('stuff.txt', 'out.crypt', 'foo')
+    demo.set_key([0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f])
+    demo.set_iv([0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f])
+    t0 = time.clock()
+    demo.decrypt_file('tweakslogon.zip.crypt', 'tweakslogon.zip')
+    print('elapsed',time.clock() - t0)

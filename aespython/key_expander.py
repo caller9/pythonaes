@@ -44,10 +44,10 @@ class KeyExpander:
         #Append the list of elements 1-3 and list comprised of element 0 (circular rotate left)
         #For each element of this new list, put the result of sbox into output array.
         #I was torn on readability vs pythonicity. This also may be faster.
-        output = [self._tables.get_sbox(i) for i in key_array[1:] + key_array[:1]]
+        output = [self._tables.sbox[i] for i in key_array[1:] + key_array[:1]]
 
         #First byte of output array is XORed with rcon(iteration)
-        output[0] = output[0] ^ self._tables.get_rcon(iteration)
+        output[0] = output[0] ^ self._tables.rcon[iteration]
         
         return output
     
@@ -99,7 +99,7 @@ class KeyExpander:
                 t = new_key[-4:]
                 t2=[]
                 for x in t:
-                    t2.append(self._tables.get_sbox(x))
+                    t2.append(self._tables.sbox[x])
                 t = self._xor_list(t2, new_key[-self._n : -self._n + 4])
                 new_key.extend(t)
                 len_new_key += 4

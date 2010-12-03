@@ -36,11 +36,11 @@ class AESCipher:
         
     def _sub_bytes (self, state):
         #Run state through sbox
-        return [self._tables.get_sbox(i) for i in state]
+        return [self._tables.sbox[i] for i in state]
     
     def _i_sub_bytes (self, state):
         #Run state through inverted sbox
-        return [self._tables.get_i_sbox(i) for i in state]
+        return [self._tables.i_sbox[i] for i in state]
     
     def _shift_row (self, row, shift):
         #Circular shift row left by shift amount
@@ -78,26 +78,28 @@ class AESCipher:
         #The matrices can be described by the galois_multipliers 
         #vectors below used in different orders
         if (inverse):
-            galois_multipliers = [14, 11, 13, 9]
+            galois_multipliers = [14, 11, 13, 9] 
         else:
-            galois_multipliers = [2, 3, 1, 1]
+            galois_multipliers = [2, 3, 1, 1] 
+        
+        #Most expensive step computationally, over 50% of time is spent here
         return [
-            self._tables.get_galois(galois_multipliers[0], column[0]) ^ 
-            self._tables.get_galois(galois_multipliers[1], column[1]) ^
-            self._tables.get_galois(galois_multipliers[2], column[2]) ^
-            self._tables.get_galois(galois_multipliers[3], column[3]),
-            self._tables.get_galois(galois_multipliers[3], column[0]) ^ 
-            self._tables.get_galois(galois_multipliers[0], column[1]) ^
-            self._tables.get_galois(galois_multipliers[1], column[2]) ^
-            self._tables.get_galois(galois_multipliers[2], column[3]),
-            self._tables.get_galois(galois_multipliers[2], column[0]) ^ 
-            self._tables.get_galois(galois_multipliers[3], column[1]) ^
-            self._tables.get_galois(galois_multipliers[0], column[2]) ^
-            self._tables.get_galois(galois_multipliers[1], column[3]),
-            self._tables.get_galois(galois_multipliers[1], column[0]) ^ 
-            self._tables.get_galois(galois_multipliers[2], column[1]) ^
-            self._tables.get_galois(galois_multipliers[3], column[2]) ^
-            self._tables.get_galois(galois_multipliers[0], column[3])]
+            self._tables.galois_lookup[galois_multipliers[0]][column[0]] ^ 
+            self._tables.galois_lookup[galois_multipliers[1]][column[1]] ^
+            self._tables.galois_lookup[galois_multipliers[2]][column[2]] ^
+            self._tables.galois_lookup[galois_multipliers[3]][column[3]],
+            self._tables.galois_lookup[galois_multipliers[3]][column[0]] ^ 
+            self._tables.galois_lookup[galois_multipliers[0]][column[1]] ^
+            self._tables.galois_lookup[galois_multipliers[1]][column[2]] ^
+            self._tables.galois_lookup[galois_multipliers[2]][column[3]],
+            self._tables.galois_lookup[galois_multipliers[2]][column[0]] ^ 
+            self._tables.galois_lookup[galois_multipliers[3]][column[1]] ^
+            self._tables.galois_lookup[galois_multipliers[0]][column[2]] ^
+            self._tables.galois_lookup[galois_multipliers[1]][column[3]],
+            self._tables.galois_lookup[galois_multipliers[1]][column[0]] ^ 
+            self._tables.galois_lookup[galois_multipliers[2]][column[1]] ^
+            self._tables.galois_lookup[galois_multipliers[3]][column[2]] ^
+            self._tables.galois_lookup[galois_multipliers[0]][column[3]]]    
         
     def _mix_columns (self, state, inverse):
         #Perform mix_column for each column in the state
@@ -145,7 +147,7 @@ class AESCipher:
         state = self._add_round_key(state, 0)
         
         return state
-
+        
 import unittest
 class TestCipher(unittest.TestCase):
     def test_cipher(self):
