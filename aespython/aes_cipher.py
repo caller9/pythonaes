@@ -83,23 +83,28 @@ class AESCipher:
             galois_multipliers = [2, 3, 1, 1] 
         
         #Most expensive step computationally, over 50% of time is spent here
+        
+        #Copying the dictionary to a local variable each time actually provides
+        # a 3-6% speedup over referencing self._tables.galois_lookup ?!
+        #Thanks to Wallseeker on proggit
+        gl = self._tables.galois_lookup
         return [
-            self._tables.galois_lookup[galois_multipliers[0]][column[0]] ^ 
-            self._tables.galois_lookup[galois_multipliers[1]][column[1]] ^
-            self._tables.galois_lookup[galois_multipliers[2]][column[2]] ^
-            self._tables.galois_lookup[galois_multipliers[3]][column[3]],
-            self._tables.galois_lookup[galois_multipliers[3]][column[0]] ^ 
-            self._tables.galois_lookup[galois_multipliers[0]][column[1]] ^
-            self._tables.galois_lookup[galois_multipliers[1]][column[2]] ^
-            self._tables.galois_lookup[galois_multipliers[2]][column[3]],
-            self._tables.galois_lookup[galois_multipliers[2]][column[0]] ^ 
-            self._tables.galois_lookup[galois_multipliers[3]][column[1]] ^
-            self._tables.galois_lookup[galois_multipliers[0]][column[2]] ^
-            self._tables.galois_lookup[galois_multipliers[1]][column[3]],
-            self._tables.galois_lookup[galois_multipliers[1]][column[0]] ^ 
-            self._tables.galois_lookup[galois_multipliers[2]][column[1]] ^
-            self._tables.galois_lookup[galois_multipliers[3]][column[2]] ^
-            self._tables.galois_lookup[galois_multipliers[0]][column[3]]]    
+            gl[galois_multipliers[0]][column[0]] ^ 
+            gl[galois_multipliers[1]][column[1]] ^
+            gl[galois_multipliers[2]][column[2]] ^
+            gl[galois_multipliers[3]][column[3]],
+            gl[galois_multipliers[3]][column[0]] ^ 
+            gl[galois_multipliers[0]][column[1]] ^
+            gl[galois_multipliers[1]][column[2]] ^
+            gl[galois_multipliers[2]][column[3]],
+            gl[galois_multipliers[2]][column[0]] ^ 
+            gl[galois_multipliers[3]][column[1]] ^
+            gl[galois_multipliers[0]][column[2]] ^
+            gl[galois_multipliers[1]][column[3]],
+            gl[galois_multipliers[1]][column[0]] ^ 
+            gl[galois_multipliers[2]][column[1]] ^
+            gl[galois_multipliers[3]][column[2]] ^
+            gl[galois_multipliers[0]][column[3]]]  
         
     def _mix_columns (self, state, inverse):
         #Perform mix_column for each column in the state
@@ -122,7 +127,7 @@ class AESCipher:
         state = self.fill_block(input)
         
         state = self._add_round_key(state, 0)
-                
+        
         for i in range(1, self._Nr):
             state = self._sub_bytes(state)
             state = self._shift_rows(state)

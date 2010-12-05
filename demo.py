@@ -29,6 +29,7 @@ import hashlib
 import struct
 import getopt
 import sys
+import time
 
 from aespython import key_expander, aes_cipher, cbc_mode
 
@@ -223,12 +224,16 @@ def main():
         print('Both input and output filenames are required')
         sys.exit(2)
     
+    start = time.time()
     if decrypt:
         print ('Decrypting', in_file, 'to', out_file)
         demo.decrypt_file( in_file, out_file, password)
     else:
         print ('Encrypting', in_file, 'to', out_file)
         demo.encrypt_file( in_file, out_file, password)
-
+    end = time.time()
+    
+    print('Time',end - start,'s')
+    
 if __name__ == "__main__":
     main()
