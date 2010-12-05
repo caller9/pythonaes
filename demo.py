@@ -1,17 +1,22 @@
 #!/usr/bin/env python
 """
-Demonstration the pythonaes package. 
+Demonstration the pythonaes package. Requires Python 2.6 or 3.x
 
 This program was written as a test. It should be reviewed before use on classified material.
+You should also keep a copy of your original file after it is encrypted, all of my tests were
+able to get the file back 100% in tact and identical to the original. Your mileage may vary.
+
+***This is a demo program.***
 
 The method for creating the key and iv from a password is something that I made up, not an industry standard.
     There are 256 bits of salt pulled from OS's cryptographically strong random source.
-    Any specific password will generate minimally 2^128 different Keys.
-    Any specific password will generate minimally 2^128 different IVs independent of Key
+    Any specific password will generate 2^128 different Keys.
+    Any specific password will generate 2^128 different IVs independent of Key
 
 On decryption, salt is read from first 32 bytes of encrypted file.
 
-In encrypted file, after salt(if present), are 4 bytes representing file size. 4GB file size limit.
+In the encrypted file, after salt(if present), are 4 bytes representing file size. 4GB file size limit.
+It would also take quite a while to process 4GB.
 
 Copyright (c) 2010, Adam Newman http://www.caller9.com/
 Licensed under the MIT license http://www.opensource.org/licenses/mit-license.php
@@ -32,6 +37,7 @@ class AESdemo:
         self._salt = None
         self._iv = None
         self._key = None
+        self._python3 = sys.version_info > (3, 0)
     
     def new_salt(self):
         self._salt = os.urandom(32)
@@ -54,6 +60,17 @@ class AESdemo:
         sha512 = hashlib.sha512(password.encode('utf-8') + self._salt[:16]).digest()
         self._key = bytearray(sha512[:32])
         self._iv = [i ^ j for i, j in zip(bytearray(self._salt[16:]), bytearray(sha512[32:48]))]
+    
+    def fix_bytes(self, byte_list):
+        #bytes function is broken in python < 3. It appears to be an alias to str()
+        #Either that or I have insufficient magic to make it work properly. Calling bytes on my
+        #array returns a string of the list as if you fed the list to print() and captured stdout
+        if (self._python3):
+            return bytes(byte_list)
+        tmpstr=''
+        for i in byte_list:
+            tmpstr += chr(i)
+        return tmpstr
     
     def decrypt_file(self, in_file_path, out_file_path, password = None):
         with open(in_file_path, 'rb') as in_file:
@@ -89,9 +106,9 @@ class AESdemo:
                         out_data = aes_cbc_256.decrypt_block(bytearray(in_data))
                         #At end of file, if end of original file is within < 16 bytes slice it out.
                         if (filesize - out_file.tell() < 16):
-                            out_file.write(bytes(out_data[:filesize - out_file.tell()]))
+                            out_file.write(self.fix_bytes(out_data[:filesize - out_file.tell()]))
                         else:
-                            out_file.write(bytes(out_data))
+                            out_file.write(self.fix_bytes(out_data))
                     
         
         self._salt = None
@@ -139,7 +156,7 @@ class AESdemo:
                         eof = True
                     else:
                         out_data = aes_cbc_256.encrypt_block(bytearray(in_data))
-                        out_file.write(bytes(out_data))
+                        out_file.write(self.fix_bytes(out_data))                        
                 
         self._salt = None
         return True
@@ -154,6 +171,10 @@ def usage():
     print('-v HEXIV    or --iv=HEXIV \t Provide 128 bit IV manually. Requires key.')
     
 def main():
+    
+    if (sys.version_info < (2,6)):
+        print ('Requires Python 2.6 or greater')
+        sys.exit(1)
     
     if (len(sys.argv) < 2):
         usage()
