@@ -113,9 +113,9 @@ class AESCipher:
         return [ i ^ j for i,j in zip(state, self._expanded_key[round * 16 : (round + 1) * 16])]
     
     def fill_block (self, input):
-        if (len(input) < 16):
-            return list(input) + [0] * (16 - len(input))
-        return input
+        if (len(input) == 16):
+            return input
+        return list(input) + [0] * (16 - len(input))
     
     def cipher_block (self, input):
         """Perform AES block cipher on input"""
