@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 AES Block Cipher.
-
+ 
 Performs single block cipher decipher operations on a 16 element list of integers.
 These integers represent 8 bit bytes in a 128 bit block.
 The result of cipher or decipher operations is the transformed 16 element list of integers.
