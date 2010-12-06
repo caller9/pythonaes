@@ -63,9 +63,8 @@ class KeyExpander:
         len_new_key = len(new_key)
         if len_new_key != self._n:
             raise RuntimeError('expand(): key size is invalid')
-
-
         rcon_iteration = 1
+        nex=new_key.extend
 
         #There are several parts of the code below that could be done with tidy list comprehensions like
         #the one I put in _core, but I left this alone for readability.
@@ -74,21 +73,21 @@ class KeyExpander:
         while 1:
             #Copy last 4 bytes of extended key, apply _core function order i, increment i(rcon_iteration),
             #xor with 4 bytes n bytes from end of extended key
-            new_key+=self._xor_list(self._core(new_key[-4:], rcon_iteration), new_key[-self._n : -self._n + 4])
+            nex(self._xor_list(self._core(new_key[-4:], rcon_iteration), new_key[-self._n : -self._n + 4]))
             rcon_iteration += 1
             len_new_key += 4
 
             #Run three passes of 4 byte expansion using copy of 4 byte tail of extended key
             #which is then xor'd with 4 bytes n bytes from end of extended key
             for j in 0,1,2:
-                new_key+=self._xor_list(new_key[-4:], new_key[-self._n : -self._n + 4])
+                new_key.extend(self._xor_list(new_key[-4:], new_key[-self._n : -self._n + 4]))
                 len_new_key += 4
             if len_new_key >= self._b:return new_key
             else:
                 #If key length is 256 and key is not complete, add 4 bytes tail of extended key
                 #run through sbox before xor with 4 bytes n bytes from end of extended key
                 if self._key_length == 256:
-                    new_key+=self._xor_list([aes_tables.sbox[x] for x in new_key[-4:]], new_key[-self._n : -self._n + 4])
+                    nex(self._xor_list([aes_tables.sbox[x] for x in new_key[-4:]], new_key[-self._n : -self._n + 4]))
                     len_new_key += 4
                     if len_new_key >= self._b:return new_key
 
@@ -96,7 +95,7 @@ class KeyExpander:
                 #of 4 byte tail of extended key xor with 4 bytes n bytes from end of extended key
                 if self._key_length != 128:
                     for j in ((0,1) if self._key_length == 192 else (0,1,2)):
-                        new_key+=self._xor_list(new_key[-4:], new_key[-self._n : -self._n + 4])
+                        nex(self._xor_list(new_key[-4:], new_key[-self._n : -self._n + 4]))
                         len_new_key += 4
                     if len_new_key >= self._b:return new_key
 

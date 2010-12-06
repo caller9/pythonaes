@@ -52,20 +52,20 @@ class AESCipher:
         return row
 
     def _shift_rows (self, state):
-        #Extract rows as every 4th item starting at [0..3]
+        #Extract rows as every 4th item starting at [1..3]
         #Replace row with shift_row operation
         for i in 1,2,3:
             state[i::4] = self._shift_row(state[i::4],i)
 
     def _i_shift_rows (self, state):
-        #Extract rows as every 4th item starting at [0..3]
+        #Extract rows as every 4th item starting at [1..3]
         #Replace row with inverse shift_row operation
         for i in 1,2,3:
             state[i::4] = self._i_shift_row(state[i::4],-i)
 
     def _mix_column (self, column, inverse):
         #Use galois lookup tables instead of performing complicated operations
-        #If inverse, use matrix with inverse values.
+        #If inverse, use matrix with inverse values
         g0,g1,g2,g3=aes_tables.galI if inverse else aes_tables.galNI
         c0,c1,c2,c3=column
         return (
