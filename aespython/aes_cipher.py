@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 AES Block Cipher.
- 
+
 Performs single block cipher decipher operations on a 16 element list of integers.
 These integers represent 8 bit bytes in a 128 bit block.
 The result of cipher or decipher operations is the transformed 16 element list of integers.
@@ -23,167 +23,129 @@ except ValueError:
 
 class AESCipher:
     """Perform single block AES cipher/decipher"""
-    
-    def __init__ (self, expanded_key):        
+
+    def __init__ (self, expanded_key):
         #Store epanded key
         self._expanded_key = expanded_key
-        
+
         #Number of rounds determined by expanded key length
-        self._Nr = int(len(expanded_key) / 16) - 1        
-        
-        #Tables to replace calculation with lookups
-        self._tables = aes_tables.AESTables()
-        
+        self._Nr = (len(expanded_key)>>4) - 1
+
     def _sub_bytes (self, state):
         #Run state through sbox
-        return [self._tables.sbox[i] for i in state]
-    
+        for i,s in enumerate(state):state[i]=aes_tables.sbox[s]
+
     def _i_sub_bytes (self, state):
         #Run state through inverted sbox
-        return [self._tables.i_sbox[i] for i in state]
-    
+        for i,s in enumerate(state):state[i]=aes_tables.i_sbox[s]
+
     def _shift_row (self, row, shift):
         #Circular shift row left by shift amount
-        if (shift == 0):
-            return row
-        else:
-            return row[shift:] + row[:shift]
-    
+        row+=row[:shift]
+        del row[:shift]
+        return row
+
     def _shift_rows (self, state):
-        result = [0] * 16
         #Extract rows as every 4th item starting at [0..3]
         #Replace row with shift_row operation
-        for i in range(4):
-            result[i::4] = self._shift_row(state[i::4],i)
-        return result
-    
+        for i in 1,2,3:
+            state[i::4] = self._shift_row(state[i::4],i)
+
     def _i_shift_row (self, row, shift):
         #Circular shift row right by shift amount
-        if (shift == 0):
-            return row
-        else:
-            return row[-shift:] + row[:-shift] 
-        
+        return row[-shift:] + row[:-shift]
+
     def _i_shift_rows (self, state):
-        result = [0] * 16
         #Extract rows as every 4th item starting at [0..3]
         #Replace row with inverse shift_row operation
-        for i in range(4):
-            result[i::4] = self._i_shift_row(state[i::4],i)
-        return result
-    
+        for i in 1,2,3:
+            state[i::4] = self._i_shift_row(state[i::4],i)
+
     def _mix_column (self, column, inverse):
         #Use galois lookup tables instead of performing complicated operations
-        #If inverse, use matrix with inverse values. 
-        #The matrices can be described by the galois_multipliers 
-        #vectors below used in different orders
-        if (inverse):
-            galois_multipliers = [14, 11, 13, 9] 
+        #If inverse, use matrix with inverse values.
+        if inverse:
+            g0=aes_tables.gal14
+            g1=aes_tables.gal11
+            g2=aes_tables.gal13
+            g3=aes_tables.gal9
         else:
-            galois_multipliers = [2, 3, 1, 1] 
-        
-        #Most expensive step computationally, over 50% of time is spent here
-        
-        #Copying the dictionary to a local variable each time actually provides
-        # a 3-6% speedup over referencing self._tables.galois_lookup ?!
-        #Thanks to Wallseeker on proggit
-        gl = self._tables.galois_lookup
-        return [
-            gl[galois_multipliers[0]][column[0]] ^ 
-            gl[galois_multipliers[1]][column[1]] ^
-            gl[galois_multipliers[2]][column[2]] ^
-            gl[galois_multipliers[3]][column[3]],
-            gl[galois_multipliers[3]][column[0]] ^ 
-            gl[galois_multipliers[0]][column[1]] ^
-            gl[galois_multipliers[1]][column[2]] ^
-            gl[galois_multipliers[2]][column[3]],
-            gl[galois_multipliers[2]][column[0]] ^ 
-            gl[galois_multipliers[3]][column[1]] ^
-            gl[galois_multipliers[0]][column[2]] ^
-            gl[galois_multipliers[1]][column[3]],
-            gl[galois_multipliers[1]][column[0]] ^ 
-            gl[galois_multipliers[2]][column[1]] ^
-            gl[galois_multipliers[3]][column[2]] ^
-            gl[galois_multipliers[0]][column[3]]]  
-        
+            g0=aes_tables.gal2
+            g1=aes_tables.gal3
+            g2=aes_tables.gal1
+            g3=aes_tables.gal1
+        c0,c1,c2,c3=column
+        return (
+            g0[c0]^g1[c1]^g2[c2]^g3[c3],
+            g3[c0]^g0[c1]^g1[c2]^g2[c3],
+            g2[c0]^g3[c1]^g0[c2]^g1[c3],
+            g1[c0]^g2[c1]^g3[c2]^g0[c3])
+
     def _mix_columns (self, state, inverse):
         #Perform mix_column for each column in the state
-        for i in range(4):
-            start = i * 4
-            state[start : start + 4] = self._mix_column(state[start : start + 4], inverse)            
-        return state
-    
+        for i in 0,4,8,12:
+            state[i : i + 4] = self._mix_column(state[i : i + 4], inverse)
+
     def _add_round_key (self, state, round):
         #XOR the state with the current round key
-        return [ i ^ j for i,j in zip(state, self._expanded_key[round * 16 : (round + 1) * 16])]
-    
-    def fill_block (self, input):
-        if (len(input) == 16):
-            return input
-        return list(input) + [0] * (16 - len(input))
-    
-    def cipher_block (self, input):
+        for k,(i,j) in enumerate(zip(state, self._expanded_key[round*16:(round+1)*16])):state[k]=i^j
+
+    def cipher_block (self, state):
         """Perform AES block cipher on input"""
-        state = self.fill_block(input)
-        
-        state = self._add_round_key(state, 0)
-        
+        state=state+[0]*(16-len(state))#Fails test if it changes the input with +=
+
+        self._add_round_key(state, 0)
+
         for i in range(1, self._Nr):
-            state = self._sub_bytes(state)
-            state = self._shift_rows(state)
-            state = self._mix_columns(state, False)
-            state = self._add_round_key(state, i)
-                    
-        state = self._sub_bytes(state)
-        state = self._shift_rows(state)
-        state = self._add_round_key(state, self._Nr)
-                
+            self._sub_bytes(state)
+            self._shift_rows(state)
+            self._mix_columns(state, False)
+            self._add_round_key(state, i)
+
+        self._sub_bytes(state)
+        self._shift_rows(state)
+        self._add_round_key(state, self._Nr)
         return state
-    
-    def decipher_block (self, input):
+
+    def decipher_block (self, state):
         """Perform AES block decipher on input"""
-        state = self.fill_block(input)
-        
-        state = self._add_round_key(state, self._Nr)
-        
+        state=state+[0]*(16-len(state))
+
+        self._add_round_key(state, self._Nr)
+
         for i in range(self._Nr - 1, 0, -1):
-            state = self._i_shift_rows(state)
-            state = self._i_sub_bytes(state)
-            state = self._add_round_key(state, i)
-            state = self._mix_columns(state, True)
-        
-        state = self._i_shift_rows(state)
-        state = self._i_sub_bytes(state)
-        state = self._add_round_key(state, 0)
-        
+            self._i_shift_rows(state)
+            self._i_sub_bytes(state)
+            self._add_round_key(state, i)
+            self._mix_columns(state, True)
+
+        self._i_shift_rows(state)
+        self._i_sub_bytes(state)
+        self._add_round_key(state, 0)
         return state
-        
+
 import unittest
 class TestCipher(unittest.TestCase):
     def test_cipher(self):
-        """Test AES cipher with all key lengths."""
+        """Test AES cipher with all key lengths"""
         import test_keys
         import key_expander
-        
+
         test_data = test_keys.TestKeys()
-        
-        for key_size in [128, 192, 256]:
+
+        for key_size in 128, 192, 256:
             test_key_expander = key_expander.KeyExpander(key_size)
             test_expanded_key = test_key_expander.expand(test_data.test_key[key_size])
             test_cipher = AESCipher(test_expanded_key)
-            test_result_ciphertext = test_cipher.cipher_block(test_data.test_block_plaintext)            
+            test_result_ciphertext = test_cipher.cipher_block(test_data.test_block_plaintext)
             self.assertEquals(len([i for i, j in zip(test_result_ciphertext, test_data.test_block_ciphertext_validated[key_size]) if i == j]),
                 16,
-                msg='Test ' + str(key_size) + ' bit cipher')
-        
+                msg='Test %d bit cipher'%key_size)
+
             test_result_plaintext = test_cipher.decipher_block(test_data.test_block_ciphertext_validated[key_size])
             self.assertEquals(len([i for i, j in zip(test_result_plaintext, test_data.test_block_plaintext) if i == j]),
                 16,
-                msg='Test ' + str(key_size) + ' bit decipher')
+                msg='Test %d bit decipher'%key_size)
 
 if __name__ == "__main__":
     unittest.main()
-
-    
-    
-    
