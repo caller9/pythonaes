@@ -45,35 +45,28 @@ class AESCipher:
         del row[:shift]
         return row
 
+    def _i_shift_row (self, row, shift):
+        #Circular shift row left by shift amount
+        row+=row[:shift]
+        del row[:4+shift]
+        return row
+
     def _shift_rows (self, state):
         #Extract rows as every 4th item starting at [0..3]
         #Replace row with shift_row operation
         for i in 1,2,3:
             state[i::4] = self._shift_row(state[i::4],i)
 
-    def _i_shift_row (self, row, shift):
-        #Circular shift row right by shift amount
-        return row[-shift:] + row[:-shift]
-
     def _i_shift_rows (self, state):
         #Extract rows as every 4th item starting at [0..3]
         #Replace row with inverse shift_row operation
         for i in 1,2,3:
-            state[i::4] = self._i_shift_row(state[i::4],i)
+            state[i::4] = self._i_shift_row(state[i::4],-i)
 
     def _mix_column (self, column, inverse):
         #Use galois lookup tables instead of performing complicated operations
         #If inverse, use matrix with inverse values.
-        if inverse:
-            g0=aes_tables.gal14
-            g1=aes_tables.gal11
-            g2=aes_tables.gal13
-            g3=aes_tables.gal9
-        else:
-            g0=aes_tables.gal2
-            g1=aes_tables.gal3
-            g2=aes_tables.gal1
-            g3=aes_tables.gal1
+        g0,g1,g2,g3=aes_tables.galI if inverse else aes_tables.galNI
         c0,c1,c2,c3=column
         return (
             g0[c0]^g1[c1]^g2[c2]^g3[c3],
@@ -83,8 +76,8 @@ class AESCipher:
 
     def _mix_columns (self, state, inverse):
         #Perform mix_column for each column in the state
-        for i in 0,4,8,12:
-            state[i : i + 4] = self._mix_column(state[i : i + 4], inverse)
+        for i,j in (0,4),(4,8),(8,12),(12,16):
+            state[i:j] = self._mix_column(state[i:j], inverse)
 
     def _add_round_key (self, state, round):
         #XOR the state with the current round key
