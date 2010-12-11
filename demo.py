@@ -100,11 +100,11 @@ class AESdemo:
                 eof = False
                 
                 while not eof:
-                    in_data = bytearray(in_file.read(16))                    
+                    in_data = in_file.read(16)
                     if (len(in_data) == 0):
                         eof = True
                     else:
-                        out_data = aes_cbc_256.decrypt_block(bytearray(in_data))
+                        out_data = aes_cbc_256.decrypt_block(list(bytearray(in_data)))
                         #At end of file, if end of original file is within < 16 bytes slice it out.
                         if (filesize - out_file.tell() < 16):
                             out_file.write(self.fix_bytes(out_data[:filesize - out_file.tell()]))
@@ -164,12 +164,26 @@ class AESdemo:
 
 def usage():
     print('AES Demo.py usage:')
+    print('-u \t\t\t\t Run unit tests.')
     print('-d \t\t\t\t Use decryption mode.')
     print('-i INFILE   or --in=INFILE \t Specify input file.')
     print('-o OUTFILE  or --out=OUTFILE \t Specify output file.')
     print('-p PASSWORD or --pass=PASSWORD \t Specify password. precludes key/iv')
     print('-k HEXKEY   or --key=HEXKEY \t Provide 256 bit key manually. Requires iv.')
     print('-v HEXIV    or --iv=HEXIV \t Provide 128 bit IV manually. Requires key.')
+
+def unittests():
+    import unittest
+    from aespython import cfb_mode, ofb_mode
+    
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(key_expander.TestKeyExpander))
+    suite.addTest(unittest.makeSuite(aes_cipher.TestCipher))
+    suite.addTest(unittest.makeSuite(cbc_mode.TestEncryptionMode))
+    suite.addTest(unittest.makeSuite(cfb_mode.TestEncryptionMode))
+    suite.addTest(unittest.makeSuite(ofb_mode.TestEncryptionMode))
+    
+    return not unittest.TextTestRunner(verbosity = 2).run(suite).wasSuccessful()
     
 def main():
     
@@ -182,7 +196,7 @@ def main():
         sys.exit(2)
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'dk:v:i:o:p:', ['key=','iv=','in=','out=','pass='])
+        opts, args = getopt.getopt(sys.argv[1:], 'udk:v:i:o:p:', ['key=','iv=','in=','out=','pass='])
     except getopt.GetoptError as err:
         print(err)
         usage()
@@ -197,7 +211,9 @@ def main():
     
     demo = AESdemo()
     for o, a in opts:
-        if o == '-d':
+        if o == '-u':            
+            sys.exit(unittests())
+        elif o == '-d':
             decrypt=True
         elif o in ('-i','--in'):
             in_file = a

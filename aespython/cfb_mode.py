@@ -37,15 +37,17 @@ class CFBMode:
 import unittest
 class TestEncryptionMode(unittest.TestCase):
     def test_mode(self):
-        #Self test
-        import key_expander
-        import aes_cipher
-        import test_keys
+        """Test CFB Mode Encrypt/Decrypt"""
+        
+        try:
+            from . import test_keys, key_expander, aes_cipher
+        except:
+            import test_keys, key_expander, aes_cipher
         
         test_data = test_keys.TestKeys()
         
         test_expander = key_expander.KeyExpander(256)
-        test_expanded_key = test_expander.expand(test_data.test_mode_key)
+        test_expanded_key = test_expander.expand(test_data.test_mode_key,"cfb_mode")
         
         test_cipher = aes_cipher.AESCipher(test_expanded_key)
         

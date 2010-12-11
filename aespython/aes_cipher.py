@@ -29,7 +29,7 @@ class AESCipher:
         self._expanded_key = expanded_key
 
         #Number of rounds determined by expanded key length
-        self._Nr = (len(expanded_key)>>4) - 1
+        self._Nr = int(len(expanded_key) / 16) - 1
 
     def _sub_bytes (self, state):
         #Run state through sbox
@@ -121,14 +121,16 @@ import unittest
 class TestCipher(unittest.TestCase):
     def test_cipher(self):
         """Test AES cipher with all key lengths"""
-        import test_keys
-        import key_expander
+        try:
+            from . import test_keys, key_expander
+        except:
+            import test_keys, key_expander
 
         test_data = test_keys.TestKeys()
 
         for key_size in 128, 192, 256:
             test_key_expander = key_expander.KeyExpander(key_size)
-            test_expanded_key = test_key_expander.expand(test_data.test_key[key_size])
+            test_expanded_key = test_key_expander.expand(test_data.test_key[key_size],"aes_cipher" + str(key_size))
             test_cipher = AESCipher(test_expanded_key)
             test_result_ciphertext = test_cipher.cipher_block(test_data.test_block_plaintext)
             self.assertEquals(len([i for i, j in zip(test_result_ciphertext, test_data.test_block_ciphertext_validated[key_size]) if i == j]),
