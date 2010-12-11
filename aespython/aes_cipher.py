@@ -10,7 +10,10 @@ Running this file as __main__ will result in a self-test of the algorithm.
 
 Algorithm per NIST FIPS-197 http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
 
+Thanks to serprex for many optimizations in this code. For even more, see his github fork of this project.
+
 Copyright (c) 2010, Adam Newman http://www.caller9.com/
+                    Demur Rumed https://github.com/serprex
 Licensed under the MIT license http://www.opensource.org/licenses/mit-license.php
 """
 __author__ = "Adam Newman"
@@ -130,7 +133,7 @@ class TestCipher(unittest.TestCase):
 
         for key_size in 128, 192, 256:
             test_key_expander = key_expander.KeyExpander(key_size)
-            test_expanded_key = test_key_expander.expand(test_data.test_key[key_size],"aes_cipher" + str(key_size))
+            test_expanded_key = test_key_expander.expand(test_data.test_key[key_size])
             test_cipher = AESCipher(test_expanded_key)
             test_result_ciphertext = test_cipher.cipher_block(test_data.test_block_plaintext)
             self.assertEquals(len([i for i, j in zip(test_result_ciphertext, test_data.test_block_ciphertext_validated[key_size]) if i == j]),

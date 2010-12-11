@@ -46,7 +46,7 @@ class TestEncryptionMode(unittest.TestCase):
         test_data = test_keys.TestKeys()
         
         test_expander = key_expander.KeyExpander(256)
-        test_expanded_key = test_expander.expand(test_data.test_mode_key,"cbc_mode")
+        test_expanded_key = test_expander.expand(test_data.test_mode_key)
         
         test_cipher = aes_cipher.AESCipher(test_expanded_key)
         

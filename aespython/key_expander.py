@@ -51,7 +51,7 @@ class KeyExpander:
     def _xor_list(self, list_1, list_2):
         return [ i ^ j for i,j in zip(list_1, list_2)]        
     
-    def expand(self, key_array, debugInfo=None):
+    def expand(self, key_array):
         """ 
             Expand the encryption key per AES key schedule specifications
             
@@ -131,7 +131,7 @@ class TestKeyExpander(unittest.TestCase):
         
         for key_size in [128, 192, 256]:
             test_expander = KeyExpander(key_size)
-            test_expanded_key = test_expander.expand(test_data.test_key[key_size],"key_expander" + str(key_size))
+            test_expanded_key = test_expander.expand(test_data.test_key[key_size])
             self.assertEqual (len([i for i, j in zip(test_expanded_key, test_data.test_expanded_key_validated[key_size]) if i == j]), 
                 len(test_data.test_expanded_key_validated[key_size]),
                 msg='Key expansion ' + str(key_size) + ' bit')
