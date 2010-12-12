@@ -19,7 +19,7 @@ class OFBMode:
         self._iv = [0] * block_size        
     
     def set_iv(self, iv):
-        if (len(iv) == self._block_size):
+        if len(iv) == self._block_size:
             self._iv = iv
    
     def encrypt_block(self, plaintext):

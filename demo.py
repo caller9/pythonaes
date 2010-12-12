@@ -66,7 +66,7 @@ class AESdemo:
         #bytes function is broken in python < 3. It appears to be an alias to str()
         #Either that or I have insufficient magic to make it work properly. Calling bytes on my
         #array returns a string of the list as if you fed the list to print() and captured stdout
-        if (self._python3):
+        if self._python3:
             return bytes(byte_list)
         tmpstr=''
         for i in byte_list:
@@ -101,12 +101,12 @@ class AESdemo:
                 
                 while not eof:
                     in_data = in_file.read(16)
-                    if (len(in_data) == 0):
+                    if len(in_data) == 0:
                         eof = True
                     else:
                         out_data = aes_cbc_256.decrypt_block(list(bytearray(in_data)))
                         #At end of file, if end of original file is within < 16 bytes slice it out.
-                        if (filesize - out_file.tell() < 16):
+                        if filesize - out_file.tell() < 16:
                             out_file.write(self.fix_bytes(out_data[:filesize - out_file.tell()]))
                         else:
                             out_file.write(self.fix_bytes(out_data))
@@ -153,7 +153,7 @@ class AESdemo:
                 eof = False
                 while not eof:
                     in_data = in_file.read(16)
-                    if (len(in_data) == 0):
+                    if len(in_data) == 0:
                         eof = True
                     else:
                         out_data = aes_cbc_256.encrypt_block(bytearray(in_data))
@@ -187,11 +187,11 @@ def unittests():
     
 def main():
     
-    if (sys.version_info < (2,6)):
+    if sys.version_info < (2,6):
         print ('Requires Python 2.6 or greater')
         sys.exit(1)
     
-    if (len(sys.argv) < 2):
+    if len(sys.argv) < 2:
         usage()
         sys.exit(2)
     
@@ -220,13 +220,13 @@ def main():
         elif o in ('-o','--out'):
             out_file = a
         elif o in ('-k','--key'):
-            key = demo.hex_string_to_int_array(a)
+            key = demo.hex_string_to_int_array(a)            
         elif o in ('-v','--iv'):
-            iv = demo.hex_string_to_int_array(a)
+            iv = demo.hex_string_to_int_array(a)            
         elif o in ('-p','--pass'):
             password = a
     
-    if ((key is None and password is None) or (key is not None and password is not None)):
+    if (key is None and password is None) or (key is not None and password is not None):
         print('provide either key and iv or password')
         sys.exit(2)
     elif key is not None and iv is None:
