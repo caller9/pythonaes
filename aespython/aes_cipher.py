@@ -88,7 +88,8 @@ class AESCipher:
 
     def cipher_block (self, state):
         """Perform AES block cipher on input"""
-        state=state+[0]*(16-len(state))#Fails test if it changes the input with +=
+        #PKCS7 Padding
+        state=state+[16-len(state)]*(16-len(state))#Fails test if it changes the input with +=
 
         self._add_round_key(state, 0)
 
@@ -105,6 +106,7 @@ class AESCipher:
 
     def decipher_block (self, state):
         """Perform AES block decipher on input"""
+        #null padding. Padding actually should not be needed here with valid input.
         state=state+[0]*(16-len(state))
 
         self._add_round_key(state, self._Nr)
