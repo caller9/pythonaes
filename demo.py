@@ -4,9 +4,9 @@ Demonstration the pythonaes package. Requires Python 2.6 or 3.x
 
 This program was written as a test. It should be reviewed before use on classified material.
 You should also keep a copy of your original file after it is encrypted, all of my tests were
-able to get the file back 100% in tact and identical to the original. Your mileage may vary.
+able to get the file back 100% in tact and identical to the original. 
 
-***This is a demo program.***
+___This is a demo program. Do not use in production*___
 
 The method for creating the key and iv from a password is something that I made up, not an industry standard.
     There are 256 bits of salt pulled from OS's cryptographically strong random source.
@@ -15,8 +15,14 @@ The method for creating the key and iv from a password is something that I made 
 
 On decryption, salt is read from first 32 bytes of encrypted file.
 
-In the encrypted file, after salt(if present), are 4 bytes representing file size. 4GB file size limit.
+In the encrypted file, after salt(if present), are 4 bytes* representing file size. 4GB file size limit.
 It would also take quite a while to process 4GB.
+
+* For different sizes of 'L' (unsigned long) the size of the header will change causing incompatibility for
+files encrypted/decrypted on a 64 bit system vs 32 bit. This could be resolved with a strict header format that 
+is checksummed among other things, but this is a demo/test harness. It will work in that capacity and this does 
+not affect the aespython module. This will often cause trailing blocks < 16 bytes to be truncated during
+decryption.
 
 Copyright (c) 2010, Adam Newman http://www.caller9.com/
 Licensed under the MIT license http://www.opensource.org/licenses/mit-license.php
@@ -93,7 +99,7 @@ class AESdemo:
             aes_cbc_256.set_iv(self._iv)
             
             #Read original file size
-            filesize = struct.unpack('L',in_file.read(4))[0]
+            filesize = struct.unpack('L',in_file.read(struct.calcsize('L')))[0]
             
             #Decrypt to eof
             with open(out_file_path, 'wb') as out_file:

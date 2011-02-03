@@ -11,16 +11,20 @@ Licensed under the MIT license http://www.opensource.org/licenses/mit-license.ph
 """
 __author__ = "Adam Newman"
 
-class CFBMode:
+try:
+    from aespython.cipher_mode import CipherMode
+    from aespython.mode_test import GeneralTestEncryptionMode
+except:
+    from cipher_mode import CipherMode
+    from mode_test import GeneralTestEncryptionMode
+
+class CFBMode(CipherMode):
     """Perform CFB operation on a block and retain IV information for next operation"""
-    def __init__(self, block_cipher, block_size):
-        self._block_cipher = block_cipher
-        self._block_size = block_size
-        self._iv = [0] * block_size        
     
-    def set_iv(self, iv):
-        if len(iv) == self._block_size:
-            self._iv = iv
+    name = "CFB"
+
+    def __init__(self, block_cipher, block_size):
+        CipherMode.__init__(self, block_cipher, block_size)
     
     def encrypt_block(self, plaintext):
         cipher_iv = self._block_cipher.cipher_block(self._iv)
@@ -34,36 +38,20 @@ class CFBMode:
         self._iv = ciphertext
         return plaintext
 
-import unittest
-class TestEncryptionMode(unittest.TestCase):
+class TestEncryptionMode(GeneralTestEncryptionMode):
     def test_mode(self):
-        """Test CFB Mode Encrypt/Decrypt"""
-        
+        """Test CBC Mode Encrypt/Decrypt"""        
         try:
-            from . import test_keys, key_expander, aes_cipher
+            from aespython.test_keys import TestKeys
         except:
-            import test_keys, key_expander, aes_cipher
+            from test_keys import TestKeys
+             
+        test_data = TestKeys()
+
+        test_mode = CFBMode(self.get_keyed_cipher(test_data.test_mode_key), 16)        
         
-        test_data = test_keys.TestKeys()
-        
-        test_expander = key_expander.KeyExpander(256)
-        test_expanded_key = test_expander.expand(test_data.test_mode_key)
-        
-        test_cipher = aes_cipher.AESCipher(test_expanded_key)
-        
-        test_cfb = CFBMode(test_cipher, 16)
-        
-        test_cfb.set_iv(test_data.test_mode_iv)    
-        for k in range(4):
-            self.assertEquals(len([i for i, j in zip(test_data.test_cfb_ciphertext[k],test_cfb.encrypt_block(test_data.test_mode_plaintext[k])) if i == j]),
-                16,
-                msg='CFB encrypt test block' + str(k))
-        
-        test_cfb.set_iv(test_data.test_mode_iv)
-        for k in range(4):
-            self.assertEquals(len([i for i, j in zip(test_data.test_mode_plaintext[k],test_cfb.decrypt_block(test_data.test_cfb_ciphertext[k])) if i == j]),
-                16,
-                msg='CFB decrypt test block' + str(k))
+        self.run_cipher(test_mode, test_data.test_mode_iv, test_data.test_cfb_ciphertext, test_data.test_mode_plaintext)
 
 if __name__ == "__main__":
+    import unittest
     unittest.main()

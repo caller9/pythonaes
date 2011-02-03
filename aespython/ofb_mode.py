@@ -11,8 +11,18 @@ Licensed under the MIT license http://www.opensource.org/licenses/mit-license.ph
 """
 __author__ = "Adam Newman"
 
-class OFBMode:
+try:
+    from aespython.cipher_mode import CipherMode
+    from aespython.mode_test import GeneralTestEncryptionMode
+except:
+    from cipher_mode import CipherMode
+    from mode_test import GeneralTestEncryptionMode
+
+class OFBMode(CipherMode):
     """Perform OFB operation on a block and retain IV information for next operation"""
+
+    name = "OFB"
+
     def __init__(self, block_cipher, block_size):
         self._block_cipher = block_cipher
         self._block_size = block_size
@@ -34,36 +44,20 @@ class OFBMode:
         self._iv = cipher_iv
         return plaintext
         
-import unittest
-class TestEncryptionMode(unittest.TestCase):
+class TestEncryptionMode(GeneralTestEncryptionMode):
     def test_mode(self):
-        """Test OFB Mode Encrypt/Decrypt"""
-        
+        """Test OFB Mode Encrypt/Decrypt"""        
         try:
-            from . import test_keys, key_expander, aes_cipher
+            from aespython.test_keys import TestKeys
         except:
-            import test_keys, key_expander, aes_cipher
+            from test_keys import TestKeys
+             
+        test_data = TestKeys()
+
+        test_mode = OFBMode(self.get_keyed_cipher(test_data.test_mode_key), 16)        
         
-        test_data = test_keys.TestKeys()
-        
-        test_expander = key_expander.KeyExpander(256)
-        test_expanded_key = test_expander.expand(test_data.test_mode_key)
-        
-        test_cipher = aes_cipher.AESCipher(test_expanded_key)
-        
-        test_ofb = OFBMode(test_cipher, 16)
-        
-        test_ofb.set_iv(test_data.test_mode_iv)    
-        for k in range(4):
-            self.assertEquals(len([i for i, j in zip(test_data.test_ofb_ciphertext[k],test_ofb.encrypt_block(test_data.test_mode_plaintext[k])) if i == j]),
-                16,
-                msg='OFB encrypt test block' + str(k))
-        
-        test_ofb.set_iv(test_data.test_mode_iv)
-        for k in range(4):
-            self.assertEquals(len([i for i, j in zip(test_data.test_mode_plaintext[k],test_ofb.decrypt_block(test_data.test_ofb_ciphertext[k])) if i == j]),
-                16,
-                msg='OFB decrypt test block' + str(k))
+        self.run_cipher(test_mode, test_data.test_mode_iv, test_data.test_ofb_ciphertext, test_data.test_mode_plaintext)
 
 if __name__ == "__main__":
+    import unittest
     unittest.main()

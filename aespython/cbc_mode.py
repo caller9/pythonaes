@@ -11,16 +11,20 @@ Licensed under the MIT license http://www.opensource.org/licenses/mit-license.ph
 """
 __author__ = "Adam Newman"
 
-class CBCMode:
-    """Perform CBC operation on a block and retain IV information for next operation"""
-    def __init__(self, block_cipher, block_size):
-        self._block_cipher = block_cipher
-        self._block_size = block_size
-        self._iv = [0] * block_size
+try:
+    from aespython.cipher_mode import CipherMode
+    from aespython.mode_test import GeneralTestEncryptionMode
+except:
+    from cipher_mode import CipherMode
+    from mode_test import GeneralTestEncryptionMode
 
-    def set_iv(self, iv):
-        if len(iv) == self._block_size:
-            self._iv = iv
+class CBCMode(CipherMode):
+    """Perform CBC operation on a block and retain IV information for next operation"""
+    
+    name = "CBC"
+
+    def __init__(self, block_cipher, block_size):
+        CipherMode.__init__(self, block_cipher, block_size)        
    
     def encrypt_block(self, plaintext):
         ciphertext = self._block_cipher.cipher_block([i ^ j for i,j in zip (plaintext, self._iv)])
@@ -33,36 +37,20 @@ class CBCMode:
         self._iv = ciphertext
         return plaintext
 
-import unittest
-class TestEncryptionMode(unittest.TestCase):
+class TestEncryptionMode(GeneralTestEncryptionMode):
     def test_mode(self):
-        """Test CBC Mode Encrypt/Decrypt"""
-        
+        """Test CBC Mode Encrypt/Decrypt"""        
         try:
-            from . import test_keys, key_expander, aes_cipher
+            from aespython.test_keys import TestKeys
         except:
-            import test_keys, key_expander, aes_cipher
+            from test_keys import TestKeys
              
-        test_data = test_keys.TestKeys()
+        test_data = TestKeys()
+
+        test_mode = CBCMode(self.get_keyed_cipher(test_data.test_mode_key), 16)        
         
-        test_expander = key_expander.KeyExpander(256)
-        test_expanded_key = test_expander.expand(test_data.test_mode_key)
-        
-        test_cipher = aes_cipher.AESCipher(test_expanded_key)
-        
-        test_cbc = CBCMode(test_cipher, 16)
-        
-        test_cbc.set_iv(test_data.test_mode_iv)    
-        for k in range(4):
-            self.assertEquals(len([i for i, j in zip(test_data.test_cbc_ciphertext[k],test_cbc.encrypt_block(test_data.test_mode_plaintext[k])) if i == j]),
-                16,
-                msg='CBC encrypt test block' + str(k))
-        
-        test_cbc.set_iv(test_data.test_mode_iv)
-        for k in range(4):
-            self.assertEquals(len([i for i, j in zip(test_data.test_mode_plaintext[k],test_cbc.decrypt_block(test_data.test_cbc_ciphertext[k])) if i == j]),
-                16,
-                msg='CBC decrypt test block' + str(k))
+        self.run_cipher(test_mode, test_data.test_mode_iv, test_data.test_cbc_ciphertext, test_data.test_mode_plaintext)
 
 if __name__ == "__main__":
+    import unittest
     unittest.main()
